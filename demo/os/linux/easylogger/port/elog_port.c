@@ -35,6 +35,7 @@
 
 #ifdef ELOG_FILE_ENABLE
 #include <elog_file.h>
+#include <elog_file_cfg.h>
 #endif
 static pthread_mutex_t output_lock;
 
@@ -49,7 +50,23 @@ ElogErrCode elog_port_init(void) {
     pthread_mutex_init(&output_lock, NULL);
 
 #ifdef ELOG_FILE_ENABLE
+    static char logfile[128];
+    time_t t = time(NULL);
+    struct tm tm_info;
+    localtime_r(&t, &tm_info);
+    snprintf(logfile, sizeof(logfile), "/tmp/elog_%04d%02d%02d_%02d%02d%02d.log",
+             tm_info.tm_year + 1900, tm_info.tm_mon + 1, tm_info.tm_mday,
+             tm_info.tm_hour, tm_info.tm_min, tm_info.tm_sec);
+
+    printf("log file: %s\n", logfile);
+
     elog_file_init();
+    ElogFileCfg cfg = {
+            .name = logfile,
+            .max_size = ELOG_FILE_MAX_SIZE,
+            .max_rotate = ELOG_FILE_MAX_ROTATE,
+    };
+    elog_file_config(&cfg);
 #endif
 
     return result;
